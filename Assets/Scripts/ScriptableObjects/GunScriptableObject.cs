@@ -13,6 +13,7 @@ public class GunScriptableObject : ScriptableObject
     public Vector3 SpawnRotation;
     public ShootConfigurationScriptableObject ShootConfig;
     public TrailConfigurationScriptableObject TrailConfig;
+    public DamageConfigScriptableObject DamageConfig;
 
     private MonoBehaviour ActiveMonobehaviour;
     private GameObject Model;
@@ -48,10 +49,12 @@ public class GunScriptableObject : ScriptableObject
 
             //shootDirection.Normalize();
 
-            Vector3 shootDirection = Camera.main.ScreenToWorldPoint(Input.mousePosition) - ShootSystem.transform.position;
+            Vector2 shootDirection = Camera.main.ScreenToWorldPoint(Input.mousePosition) - ShootSystem.transform.position;
+            Debug.DrawRay(ShootSystem.transform.position, shootDirection, Color.red, float.MaxValue);
 
+            RaycastHit2D hit = Physics2D.Raycast(ShootSystem.transform.position, shootDirection, float.MaxValue, ShootConfig.HitMask, float.MinValue);
             //If the ray cast does hit a object
-            if (Physics.Raycast(ShootSystem.transform.position, shootDirection, out RaycastHit hit, float.MaxValue, ShootConfig.HitMask))
+            if (hit)
             {
                 //Play the shooting trail animation
                 ActiveMonobehaviour.StartCoroutine(
@@ -61,13 +64,13 @@ public class GunScriptableObject : ScriptableObject
             {
                 //Play the shooting trail animation with the maximum distance set to the miss distance
                 ActiveMonobehaviour.StartCoroutine(
-                    PlayTrail(ShootSystem.transform.position,
-                    ShootSystem.transform.position + (shootDirection * TrailConfig.MissDistance), new RaycastHit()));
+                    PlayTrail(new Vector2(ShootSystem.transform.position.x, ShootSystem.transform.position.y),
+                    new Vector2(ShootSystem.transform.position.x, ShootSystem.transform.position.y) + (shootDirection * TrailConfig.MissDistance), new RaycastHit2D()));
             }
         }
     }
 
-    private IEnumerator PlayTrail(Vector2 StartPoint, Vector2 EndPoint, RaycastHit raycastHit)
+    private IEnumerator PlayTrail(Vector2 StartPoint, Vector2 EndPoint, RaycastHit2D raycastHit)
     {
         TrailRenderer instance = TrailPool.Get();
         instance.gameObject.SetActive(true);
@@ -88,16 +91,22 @@ public class GunScriptableObject : ScriptableObject
 
         instance.transform.position = EndPoint;
 
-        //TODO: can add a surface impact system
-        //if(Hit.collider != null)
-        //{
-        //    SurfaceManager.Instance.HandleImpact(
-        //        Hit.transform.gameObject,
-        //        EndPoint,
-        //        Hit.normal,
-        //        ImpactType,
-        //        0)
-        //}
+    //TODO: can add a surface impact system
+        if (raycastHit.collider != null)
+        {
+            //SurfaceManager.Instance.HandleImpact(
+            //    Hit.transform.gameObject,
+            //    EndPoint,
+            //    Hit.normal,
+            //    ImpactType,
+            //    0)
+        Debug.Log("Raycast hit: " + raycastHit.collider.gameObject);
+
+            if (raycastHit.collider.TryGetComponent(out IDamageable damageable))
+            {
+                damageable.TakeDamage(DamageConfig.GetDamage(distance));
+            }
+        }
 
         yield return new WaitForSeconds(TrailConfig.Duration);
         yield return null;
