@@ -19,3 +19,4 @@ MonoBehaviour:
   SpawnRotation: {x: 0, y: 0, z: 0}
   ShootConfig: {fileID: 11400000, guid: 0e59703eec7b65a4dab6c3f7ec42e251, type: 2}
   TrailConfig: {fileID: 11400000, guid: 6fc4cc1774ed57b4e98cdf2e24d29a5c, type: 2}
+  DamageConfig: {fileID: 11400000, guid: cc2fbe24475b92646a6a62c8408b2631, type: 2}
